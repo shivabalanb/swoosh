@@ -1,8 +1,7 @@
-import Link from 'next/link';
-import { Button } from './Button';
+import Link from "next/link";
+import { Button } from "./Button";
 import { FaArrowDown } from "react-icons/fa";
 import { FaArrowUp } from "react-icons/fa";
-
 
 export interface RequestOut {
   id: string;
@@ -17,61 +16,50 @@ export interface RequestOut {
   fulfilled: boolean;
   cancelled: boolean;
 }
-interface HomeCardProps {
-  type: string;
-  num: number;
-}
-
-interface PercentPaidCardProps {
-  percent: number;
-}
 
 interface HomeGroupProp {
   inNumber: number;
   outNumber: number;
 }
 
+interface HomeCardProps {
+  type: string;
+  num: number;
+  href: string;
+}
+
 const HomeCard = (props: HomeCardProps) => {
   return (
-    <div className="w-full rounded-lg bg-gray px-2 py-4 text-center outline outline-blue-700">
-      <div className='w-full flex justify-center py-2'>
-        {props.type == "In" ? <FaArrowDown size={30} /> : <FaArrowUp size={30} />}
+    <div className=" flex-grow  rounded-lg bg-sky-100 p-8 no-underline flex flex-col gap-8 ">
+      <div className="flex justify-between items-end text-left gap-4 ">
+        <div>
+          <div className="w-full flex justify-start py-2">
+            {props.type == "In" ? (
+              <FaArrowDown size={30} />
+            ) : (
+              <FaArrowUp size={30} />
+            )}
+          </div>
+
+          <p className="text-xl  font-bold">Swoosh {props.type}</p>
+          <p className="text-sm ">
+            {props.type == "In" ? "Incoming" : "Outgoing"} Requests
+          </p>
+        </div>
+        <p className=" text-6xl font-semibold">{props.num}</p>
       </div>
-      <p className='text-xl font-bold'>Swoosh {props.type}</p>
-      <p className='text-sm py-2'>{props.type == "In" ? "Incoming" : "Outgoing"} Requests</p>
-      <p className="py-2 text-6xl font-semibold">{props.num}</p>
-      <Button variant="Custom" title="View All" href=""></Button>
+      <Button href={props.href}>View All</Button>
     </div>
   );
 };
-
-const PercentPaidCard = (props: PercentPaidCardProps) => {
-  const percent = props.percent !== undefined ? props.percent : 100;
-  const style: React.CSSProperties & { '--value': string } = {
-    '--value': `${percent}%` // Ensure percent is a string, and append '%' if necessary
-  };
-
-  return (
-    <div className="w-2/3 h-full rounded-lg scale-150 p-4 m-5 mt-10 text-lg text-center ">
-      <p>Requests Completed</p>
-      <div className="radial-progress w-50 h-50" style={style} role="progressbar">{percent}%</div>
-    </div>
-  );
-};
-
 
 const HomeGroup = (props: HomeGroupProp) => {
   return (
-    <div className="flex flex-wrap w-full justify-evenly py-6 my-6 overflow-y-auto">
-      <Link href="/requests_in" className="w-5/12 no-underline">
-        <HomeCard type="In" num={props.inNumber} />
-      </Link>
-      <Link href="/requests_out" className="w-5/12 no-underline">
-        <HomeCard type="Out" num={props.outNumber} />
-      </Link>
-      {/* <PercentPaidCard percent={props.percentPaid}/> */}
+    <div className="flex flex-wrap gap-2 justify-center">
+      <HomeCard href="/requests_in" type="In" num={props.inNumber} />
+      <HomeCard href="/requests_out" type="Out" num={props.outNumber} />
     </div>
-  ); 
+  );
 };
- 
+
 export default HomeGroup;

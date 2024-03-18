@@ -1,89 +1,38 @@
-import Link from 'next/link';
-import { CiBellOn } from 'react-icons/ci';
-
+import Link from "next/link";
+import { CSSProperties } from "react";
+import { IoArrowForward } from "react-icons/io5";
 
 type Props = {
+  children: React.ReactNode;
   title?: string;
-  href: string;
-  variant: 'Deposit' | 'Withdraw' | 'View' | 'Pay All' | 'Pending' | 'Nudge' | 'Custom' | 'Swoosh!';
-  args?: {},
-  disabled?: boolean,
-  onClick?: ()=>void
+  href?: string;
+  args?: {};
+  disabled?: boolean;
+  style?: CSSProperties;
+  onClick?: () => void;
 };
 
-export function Button({
-  title,
-  variant,
-  href = '/',
-  args,
-  onClick,
-  disabled
-}: Props) {
-  const buttonClass = variant === 'Pending' ? 'bg-blue-200 opacity-50' : 
-                      variant === 'Nudge' ? 'bg-blue-200 w-min': 'bg-blue-200';
-
-  return (
-    <button onClick={onClick} className={`${buttonClass} rounded-full w-full hover:scale-105 duration-200 disabled ${disabled ? 'disabled' : ""}`}>
-        {variant === 'Nudge' ? (
-            <div className="flex items-center text-xl justify-center px-2 py-2">
-              <CiBellOn className="text-white" />
-            </div>
-          ) : variant === 'Custom' ? (
-            <p className="font-Inter text-center font-semibold text-white px-4 py-2">
-              {title}
-            </p>
-          ) : (
-            <p
-              className={`font-Inter text-center font-semibold text-white ${
-                variant === 'Deposit' || 
-                variant === 'Withdraw' || 
-                variant === 'View' || 
-                variant === 'Pay All' ? 
-                'px-4 py-2' : 'py-1'
-              }`}
-            >
-              {variant}
-            </p>
-          )}
-    </button>
-  );
-}
-
-
-export  function Button2({
-  title,
-  variant,
-  href = '/',
-  args,
-}: Props) {
-  const buttonClass = variant === 'Pending' ? 'bg-blue-200 opacity-50' : 
-                      variant === 'Nudge' ? 'bg-blue-200 w-min': 'bg-blue-200';
-
-  return (
-    <button className={`${buttonClass} rounded-full w-full`}>
-      <Link className="no-underline" href={href}>
-          {variant === 'Nudge' ? (
-            <div className="flex items-center text-xl justify-center px-2 py-2">
-              <CiBellOn className="text-white" />
-            </div>
-          ) : variant === 'Custom' ? (
-            <p className="font-Inter text-center font-semibold text-white px-4 py-2">
-              {title}
-            </p>
-          ) : (
-            <p
-              className={`font-Inter text-center font-semibold text-white ${
-                variant === 'Deposit' || 
-                variant === 'Withdraw' || 
-                variant === 'View' || 
-                variant === 'Pay All' ? 
-                'px-4 py-2' : 'py-1'
-              }`}
-            >
-              {variant}
-            </p>
-          )}
+export function Button({ style, children, href, onClick, disabled }: Props) {
+  if (href) {
+    return (
+      <Link
+        style={style}
+        href={href}
+        className={`p-2 px-4 bg-blue-700 text-white flex justify-between items-center rounded-full w-full hover:scale-105 duration-200 no-underline`}
+      >
+        {children}
+        <IoArrowForward />
       </Link>
+    );
+  }
+  return (
+    <button
+      style={style}
+      onClick={onClick}
+      disabled={disabled}
+      className={`p-2 bg-blue-700 text-white flex justify-center gap-2 items-center rounded-full w-full hover:scale-105 duration-200`}
+    >
+      {children}
     </button>
   );
 }

@@ -1,12 +1,14 @@
+Goals:
+1. Make sure everything works
+2. Clean up UI/ Make UI better - Framer
+3. IPFS file storage, NFT profile
+4. Friends, ETH Name
+
 Features
 1. Direct payments and requests (i.e., Venmo)
 2. Bill splitting/split payments and requests (i.e., Splitwise)
 3. Metadata for payments (i.e., images, text)
 4. AA (ERC-4337) for ERC-20 gas
-
-
-
-
 
 
 

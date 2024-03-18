@@ -1,20 +1,28 @@
-'use client';
+"use client";
 
+import ProfileBalanceCard from "../components/ProfileBalanceCard";
+import React from "react";
+import profile_icon from "../assets/logo.svg";
+import Image from "next/image";
+import {
+  ConnectWallet,
+  toWei,
+  useAddress,
+  useContract,
+  useContractWrite,
+} from "@thirdweb-dev/react";
+import PageWrapper from "../components/PageWrapper";
 
-import React, { useEffect } from 'react';
-import Wrapper from "./Wrapper";
-import {BaseSepoliaTestnet} from '@thirdweb-dev/chains';
-const ProfilePagProfilePagee = () => {
-
-
+const ProfilePage = () => {
 
   return (
+    <div className="flex flex-col">
 
-    <div>
-
-      <Wrapper />
+      <div className="flex flex-col space-y-8">
+        <ProfileBalanceCard />
+      </div>
     </div>
   );
 };
 
-export default ProfilePagProfilePagee;
+export default PageWrapper(ProfilePage, "PROFILE");
