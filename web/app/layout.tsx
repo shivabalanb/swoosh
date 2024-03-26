@@ -12,7 +12,7 @@ import {
 } from "@thirdweb-dev/react";
 import { BaseSepoliaTestnet } from "@thirdweb-dev/chains";
 import { usePathname } from "next/navigation";
-import { ChakraProvider } from "@chakra-ui/react";
+import { ChakraProvider, extendTheme } from "@chakra-ui/react";
 
 export default function RootLayout({
   children,
@@ -21,6 +21,18 @@ export default function RootLayout({
 }) {
   const hidden = ["/sign-in", "/"];
   const isSignIn = hidden.includes(usePathname());
+
+  const theme = extendTheme({
+    colors: {
+      ssky: { 500: "#e0f2fe" },
+      sblue: {
+        500: "#1d4ed8",
+      },
+      sdarkblue: {
+        500: "#1e3a8a",
+      },
+    },
+  });
 
   return (
     <html lang="en">
@@ -41,8 +53,8 @@ export default function RootLayout({
             ),
           ]}
         >
-          <div className={`m-auto max-w-lg md:max-w-3xl`}>
-            <ChakraProvider>{children} </ChakraProvider>
+          <div className={`m-auto  md:max-w-3xl`}>
+            <ChakraProvider theme={theme}>{children} </ChakraProvider>
           </div>
         </ThirdwebProvider>
       </body>

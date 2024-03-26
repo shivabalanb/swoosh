@@ -1,6 +1,5 @@
 "use client"; // This is a client component 👈🏽
 import React, { useEffect, useState } from "react";
-import HomeHeader from "./components/HomeHeader";
 import HomeGroup from "./components/HomeGroup";
 import { useContract, useContractRead } from "@thirdweb-dev/react";
 

@@ -2,173 +2,34 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "../components/Button";
 import { readSwooshContract } from "../util";
-import { useAddress, useContract, useContractWrite } from "@thirdweb-dev/react";
+import {
+  shortenAddress,
+  useAddress,
+  useContract,
+  useContractRead,
+  useContractWrite,
+} from "@thirdweb-dev/react";
+import PageWrapper from "../components/PageWrapper";
+import { BigNumber, ethers } from "ethers";
+import { Card, CardBody, CardHeader, Heading, useToast } from "@chakra-ui/react";
 
-interface RequestInHeaderGroupProp {
-  balance: number;
-  owed: number;
-}
-
-interface RequestInData {
+export interface Request {
   title: string;
-  amount: string;
+  amount: BigNumber;
+  creditor: string;
   debtors: string[];
   paid: string[];
   // result: number;
   id: number;
 }
 
-export function formatNumber(num: number): string {
-  if (num < 1000) {
-    return num.toFixed(2);
-  } else {
-    let divisor = 1;
-    let unit = "";
-
-    if (num >= 1e9) {
-      divisor = 1e9;
-      unit = "b";
-    } else if (num >= 1e6) {
-      divisor = 1e6;
-      unit = "m";
-    } else if (num >= 1e3) {
-      divisor = 1e3;
-      unit = "k";
-    }
-
-    const formattedNumber = (num / divisor).toFixed(1) + unit;
-    return formattedNumber;
-  }
-}
-
-const openSwooshModal = () => {
-  var swooshModal = document.getElementById(
-    "swoosh_modal"
-  ) as HTMLDialogElement;
-  if (swooshModal) {
-    swooshModal.showModal();
-  }
-};
-
-const closeSwooshModal = () => {
-  var swooshModal = document.getElementById(
-    "swoosh_modal"
-  ) as HTMLDialogElement;
-  if (swooshModal) {
-    swooshModal.close();
-  }
-};
-
-const RequestInHeaderGroup = (props: RequestInHeaderGroupProp) => {
-  return (
-    <div className="flex w-full rounded-lg bg-gray">
-      <div className="w-full p-3 px-4">
-        <p>Owe</p>
-        <p className="py-4 text-4xl font-semibold">
-          ${formatNumber(Number(props.owed) / Math.pow(10, 18))}
-        </p>
-        <div className="flex justify-center">
-          {/* <Button title="Swoosh!" href={'/'} variant="Custom" onClick={() => openSwooshModal()} /> */}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const RequestInGroup = () => {
-  const user_address = useAddress();
-  const [resultOut, setResultOut] = useState<Request[]>([]);
-  const [selectedId, setSelectedId] = useState<string>();
-  let { contract } = useContract(process.env.CONTRACT_ADDRESS);
-  // let []
-  readSwooshContract("getRequestsIn", [user_address], setResultOut);
-  let data: RequestInData[] = [];
-  resultOut.map((result) => {
-    data.push({
-      title: result.message,
-      amount: result.amount,
-      debtors: result.debtors,
-      paid: result.paid,
-      id: parseInt(result.id),
-    });
-  });
-
-  const { mutateAsync, isLoading, error } = useContractWrite(
-    contract,
-    "acceptAll"
-  );
-  async function submit() {
-    // e.preventDefault()
-    // alert(1);
-    mutateAsync({
-      args: [],
-    });
-  }
-  const { contract: acceptCon } = useContract(process.env.CONTRACT_ADDRESS);
-  let {
-    mutateAsync: acceptMutateAsync,
-    isLoading: acceptIsLoading,
-    error: acceptError,
-  } = useContractWrite(contract, "accept");
-  return (
-    <div className=" mt-8d grid max-h-screen grid-cols-2 gap-4 overflow-y-auto">
-      {resultOut.map((request, index) =>
-        !request.paid.includes(user_address as string) ? (
-          // <Swoosh
-          //   key={index}
-          //   onClick={() => {
-          //     acceptMutateAsync({ args: [request.id] });
-          //     setSelectedId(request.id);
-          //   }}
-          //   img=""
-          //   title={request.message}
-          //   href={''}
-          //   variant="button"
-          //   amount={
-          //     acceptIsLoading && request.id == selectedId
-          //       ? -1
-          //       : Number((Number(request.amount) / Math.pow(10, 18)).toFixed(2))
-          //   }
-          //   percent={(request.paid.length / (request.debtors.length + request.paid.length)) * 100}
-          // />
-          <p>2</p>
-        ) : null
-      )}
-
-      <dialog id="swoosh_modal" className="modal">
-        <div className="h-1/8 font-Inter modal-box w-11/12 max-w-xl bg-blue-300 text-white md:h-1/5 ">
-          <p className="font-Inter pb-4 text-center font-semibold text-white">
-            Confirm to pay back all your Swooshes
-          </p>
-          <div>
-            <div className="flex flex-row justify-evenly gap-4 pt-6">
-              {/* <Button
-                href={""}
-                title="Cancel"
-                variant={"Custom"}
-                onClick={() => closeSwooshModal()}
-              />
-              <Button
-                href={""}
-                title="Confirm"
-                variant={"Custom"}
-                onClick={() => submit()}
-              ></Button> */}
-            </div>
-          </div>
-        </div>
-      </dialog>
-    </div>
-  );
-};
-
-interface Request {
+export interface RawRequest {
   id: string;
   creditor: string;
   debtors: string[];
-  paid: any[]; // Adjust the type according to what `paid` actually contains
-  declined: any[]; // Same here, adjust the type as necessary
-  amount: string;
+  paid: any[];
+  declined: any[];
+  amount: BigNumber;
   message: string;
   imageURI: string;
   timestamp: string;
@@ -176,41 +37,108 @@ interface Request {
   cancelled: boolean;
 }
 
-const Wrapper = () => {
-  const user_address = useAddress();
-  const [deposit, setDeposit] = useState("");
-  const [resultOut, setResultOut] = useState<Request[]>([]);
-  const [userBalance, setUserBalance] = useState<number>();
-  let { contract } = useContract(process.env.CONTRACT_ADDRESS);
-  useEffect(() => {
-    if (user_address !== undefined) {
-      contract?.call("getBalance", [user_address]).then((data) => {
-        console.log(data);
-        // Assuming data can be converted to a number directly. You might need additional parsing.
-        const balance = Number(data);
-        setUserBalance(balance);
-      });
-    }
-  }, [user_address]);
-  // setUserBalance(result.data);
-  readSwooshContract("getRequestsIn", [user_address], setResultOut);
-  let sum = 0;
-  for (let i = 0; i < resultOut.length; i++) {
-    if (resultOut[i].debtors.includes(user_address as string)) {
-      sum += Number(resultOut[i].amount);
-    }
-  }
-
+const Header = (props: { owe: string }) => {
   return (
-    <div className="rounded-sm flex h-screen flex-col overflow-y-hidden px-4 pb-24">
-      <div className="sticky top-0 z-10 w-full bg-white pb-4">
-        <RequestInHeaderGroup balance={userBalance as number} owed={sum} />
-      </div>
-      <div className="h-3/5 w-full overflow-y-scroll">
-        <RequestInGroup />
-      </div>
+    <div className="flex flex-col gap-2 w-full rounded-lg bg-sky-100 p-4 mb-12">
+      <p>You Owe</p>
+      <p className="py-4 text-4xl font-semibold">{props.owe} TEST</p>
     </div>
   );
 };
 
-export default Wrapper;
+const Requests = (props: { data: Request[] }) => {
+  const toast = useToast()
+  let { contract } = useContract(process.env.NEXT_PUBLIC_CONTRACT_ADDRESS);
+  let {
+    mutateAsync: acceptMutateAsync,
+    isLoading: acceptIsLoading,
+    error: acceptError,
+  } = useContractWrite(contract, "accept");
+  console.log("REQUEST", props.data);
+
+  function submitPay(p:Request){
+    acceptMutateAsync({ args: [p.id] }).then(() => {
+      toast({
+        title: "Pay Successful!",
+        status: "success",
+        position: "bottom",
+      });
+    })
+    .catch((error) => {
+      console.log(error);
+
+      toast({
+        title: "Pay Unsuccessful.",
+        status: "error",
+        position: "bottom",
+      });
+    });
+  }
+
+  return (
+    <div className="flex gap-4 flex-wrap justify-center">
+      {props.data.map((p) => (
+        <Card size={"lg"} style={{ minWidth: "18rem" }} className="p-4">
+          <CardHeader>
+            <Heading>{p.title}</Heading>
+            <p className=" text-xl">
+              {ethers.utils.formatEther(p.amount.toString())} TEST
+            </p>
+            <p>{shortenAddress(p.creditor)}</p>
+          </CardHeader>
+          <CardBody>
+            <Button onClick={()=>submitPay(p)}>
+              Pay
+            </Button>
+          </CardBody>
+        </Card>
+      ))}
+    </div>
+  );
+};
+
+const RequestsIn = () => {
+  let { contract } = useContract(process.env.NEXT_PUBLIC_CONTRACT_ADDRESS);
+  const user_address = useAddress();
+
+  let {
+    data: inData,
+    isLoading: inIsLoading,
+    error: inError,
+  } = useContractRead(contract, "getRequestsIn", [user_address]);
+
+  const [oweSum, setOweSum] = useState("");
+  const [data, setData] = useState<Request[]>([]);
+
+  useEffect(() => {
+    if (inData) {
+      let sum = BigNumber.from("0");
+      let temp: Request[] = [];
+
+      inData.map((p: RawRequest) => {
+        if (p.debtors.includes(user_address as string) && p.paid.length == 0) {
+          sum = sum.add( p.amount.div(p.debtors.length));
+          temp.push({
+            title: p.message,
+            amount: p.amount.div(p.debtors.length),
+            debtors: p.debtors,
+            creditor: p.creditor,
+            paid: p.paid,
+            id: parseInt(p.id),
+          });
+        }
+      });
+      setData([...temp]);
+      setOweSum(ethers.utils.formatEther(sum));
+    }
+  }, [inData]);
+
+  return (
+    <div>
+      <Header owe={oweSum} />
+      <Requests data={data} />
+    </div>
+  );
+};
+
+export default PageWrapper(RequestsIn, "SWOOSH PAY");

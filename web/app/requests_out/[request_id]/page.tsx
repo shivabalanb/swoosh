@@ -1,55 +1,104 @@
-'use client'
-import React, { useEffect, useState } from 'react';
-import Header from '../../components/Header';
-import Total from '../../components/Total';
-import MembersList from "../../components/MembersList"
+"use client";
+import React, { useEffect, useState } from "react";
+import icon from "../../assets/USDC.png";
 
-//TESTING
-import {Button} from 'app/components/Button';
-import { useAccount } from 'wagmi';
-import { readSwooshContract, readSwooshContractAndOnlyGetResult } from 'app/util';
-import { useAddress, useContract } from '@thirdweb-dev/react';
+import {
+  shortenAddress,
+  useAddress,
+  useContract,
+  useContractRead,
+} from "@thirdweb-dev/react";
+import PageWrapper from "../../components/PageWrapper";
+import { useParams } from "next/navigation";
+import { BigNumber, ethers } from "ethers";
+import { RawRequest, Request } from "../../requests_in/page";
+import { Card, CardBody, Heading } from "@chakra-ui/react";
+import { motion } from "framer-motion";
+import TotalProgressBar from "../../components/TotalProgressBar";
+import Image from "next/image";
 
-interface Request {
-  id: string;
-  creditor: string;
-  debtors: string[];
-  paid: any[]; // Adjust the type according to what `paid` actually contains
-  declined: any[]; // Same here, adjust the type as necessary
-  amount: string;
-  message: string;
-  imageURI: string;
-  timestamp: string;
-  fulfilled: boolean;
-  cancelled: boolean;
-}
-
-function RequestPage_Out({ params }: { params: { request_id: string } }) {
+function RequestPage_Out() {
+  let params: { request_id: string } = useParams();
+  let { contract } = useContract(process.env.NEXT_PUBLIC_CONTRACT_ADDRESS);
   const user_address = useAddress();
-  const [resultOut, setResultOut] = useState<Request[]>([]);
-  const [userBalance, setUserBalance] = useState<number>();
-  const [owned, setOwned] = useState<Number>();
 
-  let {contract} = useContract(process.env.CONTRACT_ADDRESS);
-  // useEffect(() => { 
-  //   contract?.call("getBalance", [user_address]).then((data)=> {
-  //     console.log(data);
-  //     setUserBalance(data);
-  //   });
+  let {
+    data: outData,
+    isLoading: outIsLoading,
+    error: outError,
+  } = useContractRead(contract, "getRequestsOut", [user_address]);
 
-  // }, [userBalance])  
-  let result = readSwooshContract("getRequestsOut", [user_address], setResultOut);
-  // let chosenResult = resultOut[parseInt(params.request_id)]; 
-  // console.log('chosen result : ')
-  // console.log(chosenResult);
-  // let sumPrice = chosenResult.debtors.length * parseInt(chosenResult.amount) / Math.pow(10, 18);
+  const [owedSum, setOwedSum] = useState("");
+  const [data, setData] = useState<Request>();
+
+  useEffect(() => {
+    if (outData) {
+      let sum = BigNumber.from("0");
+      let temp: Request;
+
+      outData.map((p: RawRequest) => {
+        if (
+          p.creditor == (user_address as string) &&
+          p.id == params.request_id &&
+          p.paid.length != p.debtors.length
+        ) {
+          setOwedSum(ethers.utils.formatEther(p.amount));
+          setData({
+            title: p.message,
+            amount: p.amount,
+            debtors: p.debtors,
+            creditor: p.creditor,
+            paid: p.paid,
+            id: parseInt(p.id),
+          });
+          return;
+        }
+      });
+    }
+  }, [outData]);
+
+  if (!data) return <p>Please Wait...</p>;
   return (
     <div className="px-4">
-      <Header title={resultOut[parseInt(params.request_id)]?.message} />
-      <Total percent={100 * resultOut[parseInt(params.request_id)]?.paid.length / (resultOut[parseInt(params.request_id)]?.paid.length + resultOut[parseInt(params.request_id)]?.debtors.length)} price={resultOut[parseInt(params.request_id)]?.debtors.length * parseInt(resultOut[parseInt(params.request_id)]?.amount) / Math.pow(10, 18) }/>
-      <MembersList debtMembers={resultOut[parseInt(params.request_id)]?.debtors} paidMembers={resultOut[parseInt(params.request_id)]?.paid} total={(resultOut[parseInt(params.request_id)]?.debtors.length + resultOut[parseInt(params.request_id)]?.paid.length) * parseInt(resultOut[parseInt(params.request_id)]?.amount) / Math.pow(10, 18)}/>
-    </div> 
+      <Card>
+        <CardBody>
+          <div className="flex flex-col gap-4">
+            <Heading>{data.title}</Heading>
+            <div className="flex  items-center gap-4">
+              <motion.div animate={{ scaleX: [0, 1, 0, 1] }}>
+                <Image src={icon} alt="USDC icon" width={50} height={50} />
+              </motion.div>
+              <p className="text-4xl">
+                ${ethers.utils.formatEther(data.amount)}
+              </p>
+            </div>
+            <TotalProgressBar
+              percent={(data.paid.length / data.debtors.length) * 100}
+            />
+          </div>
+        </CardBody>
+      </Card>
+      <div>
+        {data.debtors.map((p) => (
+          <Card backgroundColor="ssky.500" variant="outline">
+            <CardBody className="flex flex-wrap justify-between items-center">
+              <p className="text-xl hidden md:block">{p}</p>
+              <p className="text-xl md:hidden">{shortenAddress(p)}</p>{" "}
+              <div className="flex flex-col gap-2">
+                <p className="text-xl">
+                  {ethers.utils
+                    .formatEther(data.amount.div(data.debtors.length))
+                    .toString()}{" "}
+                  TEST
+                </p>
+                <p>Status: {data.paid.includes(p) ? "Paid" : "Pending"} </p>
+              </div>
+            </CardBody>
+          </Card>
+        ))}
+      </div>
+    </div>
   );
-} 
+}
 
-export default RequestPage_Out;
+export default PageWrapper(RequestPage_Out, "SWOOSH");

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Button } from "./Button";
 import { FaArrowDown } from "react-icons/fa";
 import { FaArrowUp } from "react-icons/fa";
+import { extendTheme } from "@chakra-ui/react";
 
 export interface RequestOut {
   id: string;
@@ -30,7 +31,7 @@ interface HomeCardProps {
 
 const HomeCard = (props: HomeCardProps) => {
   return (
-    <div className=" flex-grow  rounded-lg bg-sky-100 p-8 no-underline flex flex-col gap-8 ">
+    <div className=" flex-1 flex-grow  rounded-lg bg-sky-100 p-8 no-underline flex flex-col justify-end gap-8 ">
       <div className="flex justify-between items-end text-left gap-4 ">
         <div>
           <div className="w-full flex justify-start py-2">
@@ -41,9 +42,11 @@ const HomeCard = (props: HomeCardProps) => {
             )}
           </div>
 
-          <p className="text-xl  font-bold">Swoosh {props.type}</p>
+          <p className="text-xl  font-bold">
+            Swoosh {props.type == "In" ? "Pay" : "Request"}
+          </p>
           <p className="text-sm ">
-            {props.type == "In" ? "Incoming" : "Outgoing"} Requests
+            {props.type == "In" ? "Incoming" : "Outgoing"}
           </p>
         </div>
         <p className=" text-6xl font-semibold">{props.num}</p>
@@ -63,3 +66,4 @@ const HomeGroup = (props: HomeGroupProp) => {
 };
 
 export default HomeGroup;
+

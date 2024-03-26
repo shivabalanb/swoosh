@@ -14,13 +14,9 @@ import {
 import PageWrapper from "../components/PageWrapper";
 
 const ProfilePage = () => {
-
   return (
     <div className="flex flex-col">
-
-      <div className="flex flex-col space-y-8">
-        <ProfileBalanceCard />
-      </div>
+      <ProfileBalanceCard />
     </div>
   );
 };

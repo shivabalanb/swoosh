@@ -1,3 +1,11 @@
+user
+SWOOSH IN - incomming requests, you owe others, pay
+SWOOSH OUT - outgoing requests, others owe you, request
+
+
+
+
+
 ## Getting Started
 
 Create a project using this example:

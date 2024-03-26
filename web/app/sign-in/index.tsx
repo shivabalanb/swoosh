@@ -54,7 +54,7 @@ export default function SignInPage() {
 
   return (
     <div className="flex h-screen flex-col items-center justify-center ">
-      <h1 className=" mb-32 text-6xl tracking-widest text-blue-100 ">SWOOSH</h1>
+      <h1 className=" mb-32 text-6xl tracking-widest text-blue-700 ">SWOOSH</h1>
       <div className="w-64 flex flex-col justify-center gap-2 ">
         <ConnectWallet
           modalSize="wide"

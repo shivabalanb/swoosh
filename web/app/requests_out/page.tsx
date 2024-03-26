@@ -1,135 +1,100 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { Button } from "../components/Button";
-import Swoosh from "../components/Swoosh";
 import { readSwooshContract } from "../util";
-import { useAddress, useContract } from "@thirdweb-dev/react";
+import {
+  useAddress,
+  useContract,
+  useContractRead,
+  useContractWrite,
+} from "@thirdweb-dev/react";
 import PageWrapper from "../components/PageWrapper";
+import { BigNumber, ethers } from "ethers";
+import { Card, CardBody, CardHeader, Heading } from "@chakra-ui/react";
+import { Request, RawRequest } from "../requests_in/page";
 
-interface RequestOutHeaderGroupProp {
-  userBalance: number;
-  owned: number;
-}
-
-function formatNumber(num: number): string {
-  if (num < 1000) {
-    return num.toFixed(2);
-  } else {
-    let divisor = 1;
-    let unit = "";
-
-    if (num >= 1e9) {
-      divisor = 1e9;
-      unit = "b";
-    } else if (num >= 1e6) {
-      divisor = 1e6;
-      unit = "m";
-    } else if (num >= 1e3) {
-      divisor = 1e3;
-      unit = "k";
-    }
-
-    const formattedNumber = (num / divisor).toFixed(2) + unit;
-    return formattedNumber;
-  }
-}
-
-const RequestOutHeaderGroup = (props: RequestOutHeaderGroupProp) => {
+const Header = (props: { owed: string }) => {
   return (
-    <div className="sticky bg-red-300 border-b-2  top-28 z-10   flex w-full rounded-lg bg-gray">
-      <div className="w-full p-3 px-4">
-        <p>Owed</p>
-        <p className="py-4 text-5xl font-semibold">
-          ${formatNumber(Number(props.owned) / Math.pow(10, 18))}
-        </p>
-      </div>
+    <div className="flex flex-col gap-2 w-full rounded-lg bg-sky-100 p-4 mb-12">
+      <p>Others Owe You</p>
+      <p className="py-4 text-4xl font-semibold">{props.owed} TEST</p>
     </div>
   );
 };
 
-interface Request {
-  id: string;
-  creditor: string;
-  debtors: string[];
-  paid: any[]; // Adjust the type according to what `paid` actually contains
-  declined: any[]; // Same here, adjust the type as necessary
-  amount: string;
-  message: string;
-  imageURI: string;
-  timestamp: string;
-  fulfilled: boolean;
-  cancelled: boolean;
-}
+const Requests = (props: { data: Request[] }) => {
+  let { contract } = useContract(process.env.NEXT_PUBLIC_CONTRACT_ADDRESS);
+  let {
+    mutateAsync: acceptMutateAsync,
+    isLoading: acceptIsLoading,
+    error: acceptError,
+  } = useContractWrite(contract, "accept");
+  console.log("REQUEST", props.data);
 
-const RequestOutGroup = () => {
-  const user_address = useAddress();
-  const [resultOut, setResultOut] = useState<Request[]>([]);
-
-  let result = readSwooshContract(
-    "getRequestsOut",
-    [user_address],
-    setResultOut
-  );
-  let dataResult = [];
-  for (let i = 0; i < resultOut.length; i++) {
-    dataResult.push({
-      title: resultOut[i].message,
-      percent:
-        resultOut[i].paid.length /
-        (resultOut[i].debtors.length + resultOut[i].paid.length),
-      href: "/requests_out/" + i,
-    });
-  }
   return (
-    <div className="mt-8 grid grid-cols-2 gap-4">
-      {dataResult.map((request) => (
-        <Swoosh
-          img=""
-          onClick={() => console.log("PAY MONEY")}
-          percent={request.percent * 100}
-          title={request.title}
-          href={request.href}
-        />
+    <div className="flex gap-4 flex-wrap justify-center">
+      {props.data.map((p) => (
+        <Card size={"lg"} style={{ minWidth: "18rem" }} className="p-4">
+          <CardHeader>
+            <Heading>{p.title}</Heading>
+            <p className=" text-xl">
+              {ethers.utils.formatEther(p.amount.toString())} TEST
+            </p>
+          </CardHeader>
+          <CardBody>
+            <Button href={`/requests_out/${p.id}`}>View</Button>
+          </CardBody>
+        </Card>
       ))}
     </div>
   );
 };
 
-const RequestsOutPage = () => {
-  const [deposit, setDeposit] = useState();
+const RequestsOut = () => {
+  let { contract } = useContract(process.env.NEXT_PUBLIC_CONTRACT_ADDRESS);
   const user_address = useAddress();
-  const [resultOut, setResultOut] = useState<Request[]>([]);
-  const [userBalance, setUserBalance] = useState<number>();
-  const [owned, setOwned] = useState<Number>();
 
-  let { contract } = useContract(process.env.CONTRACT_ADDRESS);
+  let {
+    data: outData,
+    isLoading: outIsLoading,
+    error: outError,
+  } = useContractRead(contract, "getRequestsOut", [user_address]);
+
+  const [owedSum, setOwedSum] = useState("");
+  const [data, setData] = useState<Request[]>([]);
 
   useEffect(() => {
-    if (user_address !== undefined) {
-      contract?.call("getBalance", [user_address]).then((data) => {
-        console.log(data);
-        // Assuming data can be converted to a number directly. You might need additional parsing.
-        const balance = Number(data);
-        setUserBalance(balance);
+    if (outData) {
+      let sum = BigNumber.from("0");
+      let temp: Request[] = [];
+
+      outData.map((p: RawRequest) => {
+        if (
+          p.creditor == (user_address as string) &&
+          p.paid.length != p.debtors.length
+        ) {
+          sum = sum.add(p.amount);
+          temp.push({
+            title: p.message,
+            amount: p.amount,
+            debtors: p.debtors,
+            creditor: p.creditor,
+            paid: p.paid,
+            id: parseInt(p.id),
+          });
+        }
       });
+      setData([...temp]);
+      setOwedSum(ethers.utils.formatEther(sum));
     }
-  }, [user_address]);
-  let result = readSwooshContract(
-    "getRequestsOut",
-    [user_address],
-    setResultOut
-  );
-  let sum = 0;
-  for (let i = 0; i < resultOut.length; i++) {
-    sum += Number(resultOut[i].amount) * resultOut[i].debtors.length;
-  }
+  }, [outData]);
+
   return (
     <div>
-      <RequestOutHeaderGroup userBalance={userBalance as number} owned={sum} />
-
-      <RequestOutGroup />
+      <Header owed={owedSum} />
+      <Requests data={data} />
     </div>
   );
 };
 
-export default PageWrapper(RequestsOutPage, "SWOOSH OUT");
+export default PageWrapper(RequestsOut, "SWOOSH PAY");
