@@ -23,6 +23,8 @@ To send money, a user simply enters the recipient's address and payment details 
 For bill splitting, the requester can indicate required payers and amounts owed. Payers can then approve or decline requests.
 As repayments occur, balances automatically update to track outstanding amounts in real time.
 
+Smart Contract on Base Sepholia : https://base-sepolia.blockscout.com/address/0xAF36427be959C24CA7181A489a69c3Eb64Bc565C
+
 ## Stack
 Back-end: Solidity (Foundry)
 Front-end: ThirdWeb SDK, Next.js, Tailwind CSS
