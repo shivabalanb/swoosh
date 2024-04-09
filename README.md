@@ -1,6 +1,7 @@
 # Swoosh
 Swoosh is a decentralized payment and bill splitting application built on Ethereum. It allows users to easily send payments, request money from others, and split expenses using crypto.
 Me and my team Sree, Soorya, Ian, and Nathan built this for BUILDathon at ETHDenver. This is a fork with major redesign, check out main repo for our original submission.
+
 Won Solana best DeFi/Payments app sponsor bounty!
 
 
